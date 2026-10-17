@@ -1,0 +1,7 @@
+[terraform_vms]
+%{ for name, ip in vms ~}
+${name} ansible_host=${ip}
+%{ endfor ~}
+
+[targets:children]
+terraform_vms

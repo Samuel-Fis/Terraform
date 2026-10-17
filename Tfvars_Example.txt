@@ -1,0 +1,27 @@
+target_machine = "https://192.168.0.0:8006"
+api_token      = ""
+node_name      = "<Proxmox node Name>"
+clone_target   = <VM_ID>
+
+vms = {
+  vm1 = {
+    vm_id   = 301
+    name    = "tf-vm-test1"
+    profile = "medium"
+  }
+
+  vm2 = {
+    vm_id   = 302
+    name    = "tf-vm-test2"
+    profile = "medium"
+  }
+
+  vm3 = {
+    vm_id   = 303
+    name    = "tf-vm-test3"
+    profile = "large"
+
+  }
+}
+
+ansible_public_key = "ssh-ed25519 publickey user"

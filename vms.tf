@@ -41,10 +41,19 @@ resource "proxmox_virtual_environment_vm" "vm" {
   #########################################
 
   initialization {
+    datastore_id = "local-lvm"
+
+    user_account {
+      username = "ansible"
+      keys     = [var.ansible_public_key]
+    }
+
     ip_config {
       ipv4 {
         address = "dhcp"
       }
+
     }
   }
 }
+

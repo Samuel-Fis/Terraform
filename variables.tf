@@ -62,3 +62,13 @@ variable "vms" {
     profile = string
   }))
 }
+
+###########################
+# Ansible public key Creds#
+###########################
+
+variable "ansible_public_key" {
+  type       = string
+  description = "Public key for the ansible user, same one used on the existing hosts"
+  senstive = true
+}

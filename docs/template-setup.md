@@ -1,6 +1,6 @@
 # Step 1: Download a fresh cloud image (ubuntu 26.04 in this case)
 cd /var/lib/vz/template/iso
-wget -O noble-server-cloudimg-amd64.img https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+wget -O resolute-server-cloudimg-amd64.img https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
 
 # Step 2: Create the VM shell
 qm create 9000 \
@@ -10,7 +10,7 @@ qm create 9000 \
   --net0 virtio,bridge=vmbr0
 
 # Step 3: Attach the disk and a cloud-init drive
-qm importdisk 9000 noble-server-cloudimg-amd64.img local-lvm
+qm importdisk 9000 resolute-server-cloudimg-amd64.img local-lvm
 qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0
 qm set 9000 --ide2 local-lvm:cloudinit
 qm set 9000 --boot c --bootdisk scsi0

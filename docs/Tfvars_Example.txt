@@ -1,0 +1,21 @@
+# Copy to terraform.tfvars and edit. Real tfvars files are gitignored.
+
+target_machine = "https://192.168.0.10:8006/"
+api_token      = "user@pam!terraform=00000000-0000-0000-0000-000000000000"
+node_name      = "pve"
+clone_target   = 9000 # VM ID of the cloud-init template
+
+ansible_public_key = "ssh-ed25519 AAAA... ansible"
+
+# Optional (defaults shown)
+# insecure_tls   = true
+# datastore_id   = "local-lvm"
+# bridge         = "vmbr0"
+# inventory_path = "generated/terraform_inventory.ini" # e.g. "../Ansible/terraform_inventory.ini"
+
+# profile: small | medium | large
+vms = {
+  web = { vm_id = 301, name = "web-01", profile = "small" }
+  app = { vm_id = 302, name = "app-01", profile = "medium" }
+  db  = { vm_id = 303, name = "db-01", profile = "large" }
+}

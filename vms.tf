@@ -1,12 +1,15 @@
 resource "proxmox_virtual_environment_vm" "vm" {
   for_each = var.vms
 
-  name      = each.value.name
-  vm_id     = each.value.vm_id
-  node_name = var.node_name
+  name        = each.value.name
+  vm_id       = each.value.vm_id
+  node_name   = var.node_name
+  description = "Managed by Terraform"
+  tags        = ["terraform", each.value.profile]
 
+  # Full clone of the cloud-init template
   clone {
-    vm_id = var.clone_target #target template for cloning on host
+    vm_id = var.clone_target
     full  = true
   }
 
@@ -19,29 +22,23 @@ resource "proxmox_virtual_environment_vm" "vm" {
   }
 
   disk {
-    datastore_id = "local-lvm"
+    datastore_id = var.datastore_id
     interface    = "scsi0"
     size         = local.vm_profiles[each.value.profile].disk
   }
 
   network_device {
-    bridge = "vmbr0"
-
+    bridge = var.bridge
   }
-  #############################################################
-  # this is for Qemu agent so proxmox host can talk to the VM #
-  #############################################################
 
+  # QEMU guest agent, so Proxmox (and Terraform) can read the VM's IP
   agent {
     enabled = true
   }
 
-  #########################################
-  # sets DHCP to enabled so vm gets an IP #
-  #########################################
-
+  # Cloud-init: ansible user + DHCP
   initialization {
-    datastore_id = "local-lvm"
+    datastore_id = var.datastore_id
 
     user_account {
       username = "ansible"
@@ -52,8 +49,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
       ipv4 {
         address = "dhcp"
       }
-
     }
   }
 }
-

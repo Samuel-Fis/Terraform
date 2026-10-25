@@ -1,59 +1,69 @@
-#######################################################################
-# defined based on host chosen when running terraform apply -var-file #
-#######################################################################
+##############
+# Connection # 
+##############
 
 variable "target_machine" {
   type        = string
-  description = "the web adress for the target machine. e.g. https://192.168.0.0:8006"
+  description = "Proxmox API endpoint, e.g. https://192.168.0.10:8006/"
 }
 
 variable "api_token" {
   type        = string
-  description = "api token for connecting to previously specified target machine"
+  description = "Proxmox API token for the target machine"
   sensitive   = true
+}
+
+variable "insecure_tls" {
+  type        = bool
+  description = "Skip TLS verification (self-signed Proxmox certificate)"
+  default     = true
 }
 
 variable "node_name" {
   type        = string
-  description = "name of the proxmox node you are connecting to"
+  description = "Name of the Proxmox node to deploy to"
 }
+
+###############
+# Environment #
+###############
 
 variable "clone_target" {
   type        = number
-  description = "vmid of the clone template, e.g 9000"
+  description = "VM ID of the cloud-init template to clone, e.g. 9000"
 }
 
-##################################################################
-#needs to be defined when applying unless default option required#
-##################################################################
-
-variable "cores" {
-  type        = number
-  description = "number of cores assigned to vm"
-  default     = 1
-}
-
-variable "memory" {
-  type        = number
-  description = "amount of memory assigned to VM"
-  default     = 512
-}
-
-variable "disk_size" {
-  type        = number
-  description = "amount of disk space assigned to a vm"
-  default     = 8096
-}
-
-variable "vm_name_prefix" {
+variable "datastore_id" {
   type        = string
-  description = "Prefix used for VM names"
-  default     = "tf-vm"
+  description = "Datastore for VM disks and cloud-init drives"
+  default     = "local-lvm"
 }
 
-########################################################
-# vm_profiles definition, referenced in vm_profiles.tf #
-########################################################
+variable "bridge" {
+  type        = string
+  description = "Network bridge for VM NICs"
+  default     = "vmbr0"
+}
+
+variable "inventory_path" {
+  type        = string
+  description = "Path (relative to this directory) for the generated Ansible inventory"
+  default     = "generated/terraform_inventory.ini"
+}
+
+variable "ansible_public_key" {
+  type        = string
+  description = "SSH public key installed for the ansible user"
+
+  validation {
+    condition     = can(regex("^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) AAAA", var.ansible_public_key))
+    error_message = "ansible_public_key must be a valid OpenSSH public key."
+  }
+}
+
+#######
+# VMs #
+#######
 
 variable "vms" {
   type = map(object({
@@ -61,14 +71,30 @@ variable "vms" {
     name    = string
     profile = string
   }))
-}
+  description = "VMs to create, keyed by a short logical name"
 
-###########################
-# Ansible public key Creds#
-###########################
+  validation {
+    condition     = alltrue([for v in values(var.vms) : v.vm_id >= 100])
+    error_message = "vm_id must be 100 or higher (Proxmox reserves lower IDs)."
+  }
 
-variable "ansible_public_key" {
-  type       = string
-  description = "Public key for the ansible user, same one used on the existing hosts"
-  senstive = true
+  validation {
+    condition     = length(distinct([for v in values(var.vms) : v.vm_id])) == length(var.vms)
+    error_message = "Each VM must have a unique vm_id."
+  }
+
+  validation {
+    condition     = length(distinct([for v in values(var.vms) : v.name])) == length(var.vms)
+    error_message = "Each VM must have a unique name."
+  }
+
+  validation {
+    condition     = alltrue([for v in values(var.vms) : can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", v.name))])
+    error_message = "VM names must be valid lowercase hostnames (letters, digits, hyphens)."
+  }
+
+  validation {
+    condition     = alltrue([for v in values(var.vms) : contains(["small", "medium", "large"], v.profile)])
+    error_message = "Each VM's profile must be one of: small, medium, large."
+  }
 }
